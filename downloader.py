@@ -55,7 +55,6 @@ def indicate_progress(directory):
 
 
 def parse_file(filename):
-    url_list = []
     regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
     f = open(filename, 'r')
     s = f.read()
@@ -111,17 +110,25 @@ def main(url_file, number_of_threads, destination_folder):
 
         indicate = threading.Thread(target=indicate_progress, args=(destination_folder,))
 
-        for i in range(number_of_threads):
-            if i < number_of_threads - 1:
-                list_of_threads.append(
-                    threading.Thread(target=download_files,
-                                     args=(
-                                         url_list, i * files_in_thread, files_in_thread * (i + 1), destination_folder
-                                     )))
-            else:
-                list_of_threads.append(
-                    threading.Thread(target=download_files,
-                                     args=(url_list, i * files_in_thread, number_of_files, destination_folder)))
+        if files_in_thread == 0:
+            list_of_threads.append(
+                threading.Thread(target=download_files,
+                                 args=(url_list, 0, number_of_files, destination_folder)))
+        else:
+
+            for i in range(number_of_threads):
+                if i < number_of_threads - 1:
+                    list_of_threads.append(
+                        threading.Thread(target=download_files,
+                                         args=(
+                                             url_list, i * files_in_thread, files_in_thread * (i + 1),
+                                             destination_folder
+                                         )))
+                else:
+                    list_of_threads.append(
+                        threading.Thread(target=download_files,
+                                         args=(url_list, i * files_in_thread, number_of_files, destination_folder)))
+
         indicate.start()
         for t in list_of_threads:
             t.start()
@@ -140,4 +147,3 @@ if __name__ == "__main__":
     parser.add_argument("--t", default=20, help="Number of threads (20 is default)")
     args = parser.parse_args()
     main(url_file=str(args.u), number_of_threads=int(args.t), destination_folder=str(args.d))
-
